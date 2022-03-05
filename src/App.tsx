@@ -1,20 +1,19 @@
-import { observer } from "mobx-react-lite"
-import { makeAutoObservable } from "mobx"
-import Timer from './Timer';
+export default class Timer {
+  secondsPassed: number = 0;
 
-const timer = new Timer();
-setInterval(() => {
-  timer.increaseTimer()
-}, 1000);
+  constructor(){
+    setInterval(() => {
+      this.increaseTimer()
+    }, 1000);
+  }
 
-const myTimer = makeAutoObservable(timer);
-const ObserverTimerView = observer(() => {
-  return myTimer.render();
-});
+  increaseTimer() {
+      this.secondsPassed += 1
+  }
 
-
-export default function App(){
-  return (
-    <ObserverTimerView />
-  )
+  render(){
+    return (
+      <span>Seconds passed: {this.secondsPassed}</span>
+    );
+  }
 }
