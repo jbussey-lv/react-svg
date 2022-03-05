@@ -1,30 +1,34 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
-import  Box from './Box';
-import BoxView from './BoxView';
-import { observer } from 'mobx-react-lite';
-import { makeAutoObservable, makeObservable } from 'mobx';
+import React from "react"
+import ReactDOM from "react-dom"
+import { makeAutoObservable } from "mobx"
+import { observer } from "mobx-react-lite"
+import Timer, { timerProps } from './Timer';
 
 
-let box: Box = new Box();
+const myTimer = makeAutoObservable(new Timer());
 
 
-let ObserverBoxView = observer(BoxView);
+// A function component wrapped with `observer` will react
+// to any future change in an observable it used before.
+let tv = (props: timerProps) => {
+  let { timer } = props;
+  return (
+    <span>Seconds passed: {timer.secondsPassed}</span>
+  );
+}
 
-let observableBox = makeObservable(box);
 
-setInterval(
-  () => {observableBox.incSize()},
-  1000
-)
+setInterval(() => {
+    myTimer.increaseTimer()
+}, 1000);
 
+
+const TimerView = observer(tv)
 
 function App() {
   return (
     <div className="App">
-      in app 
-      <ObserverBoxView box={observableBox}/>
+      <TimerView timer={myTimer} />
     </div>
   );
 }
