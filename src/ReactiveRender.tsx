@@ -1,9 +1,5 @@
 import { observer } from "mobx-react-lite"
-import { makeAutoObservable } from "mobx"
-import ReactDOM from "react-dom";
-import React from "react";
-import { JsxElement } from "typescript";
-import { ObservableObjectAdministration } from "mobx/dist/internal";
+import { makeObservable, makeAutoObservable } from "mobx"
 
 import { configure } from "mobx"
 
