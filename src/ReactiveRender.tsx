@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite"
-import { makeObservable, makeAutoObservable } from "mobx"
+import { makeAutoObservable } from "mobx"
 
 import { configure } from "mobx"
 
