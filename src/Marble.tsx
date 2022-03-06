@@ -1,22 +1,20 @@
 export default class Marble {
 
-  public size: number;
+  public position: number;
   public millis: number = 0;
 
-  constructor(size: number){
-    this.size = size;
-    setInterval(()=>{
-      this.millis += 1;
-    }, 100);
+  constructor(position: number){
+    this.position = position;
+    setInterval(this.increasePosition, 20);
   }
 
-  addToSize(diff: number){
-    this.size += diff;
+  private increasePosition = () => {
+    this.position += 0.4;
   }
 
   render(){
     return (
-      <div>Marble - size = {this.size}, {this.millis}</div>
+      <circle cx={this.position} cy={this.position} r="25" />
     )
   }
 

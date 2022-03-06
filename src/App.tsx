@@ -3,40 +3,44 @@ import Marble from "./Marble";
 
 export default class App {
 
-  secondsPassed: number = 0;
+  width: number = 150;
+  height: number = 75;
   marbles: Marble[] = [];
   go: boolean = true;
 
   constructor(){
     setInterval(() => {
       if(this.go){
-        this.increaseTimer();
+        this.increaseSize();
       }
     }, 1000);
-    this.toggle.bind(this);
-    this.marbles.push(new Marble(3));
-    this.marbles.push(new Marble(5));
-    this.marbles.push(new Marble(7));
-    this.marbles.push(new Marble(1));
+    this.marbles.push(new Marble(25));
+    this.marbles.push(new Marble(100));
   }
 
-  toggle(){
-    this.go = !this.go;
+  increaseSize() {
+    this.width += 50;
+    this.height += 40;
   }
 
-  increaseTimer() {
-      this.secondsPassed += 1
-      this.marbles.forEach(marble => {
-        marble.addToSize(1);
-      });
+  get style(){
+    return {
+      fill: "rgb(0,0,255)",
+      strokeWidth:3,
+      stroke: "rgb(0,0,0)"
+    }
   }
 
   render(){
     return (
-      <div>
-        <span onClick={() => {this.toggle()}}>Seconds passed: {this.secondsPassed} [click me]</span>
-        {this.marbles.map(marble => ReactiveRender(marble)) }
-      </div>
+      <svg width="800" height="600">
+
+        <g fill="white" stroke="green" strokeWidth="5">
+          <rect width={this.width} height={this.height} style={this.style} />
+          {this.marbles.map(marble => ReactiveRender(marble))}
+        </g>
+
+      </svg>
     );
   }
 }
