@@ -5,6 +5,12 @@ import React from "react";
 import { JsxElement } from "typescript";
 import { ObservableObjectAdministration } from "mobx/dist/internal";
 
+import { configure } from "mobx"
+
+configure({
+    enforceActions: "never"
+})
+
 interface ReactiveRenderObj {
   render: () => any
 }
@@ -15,7 +21,7 @@ export default function ReactiveRender(obj: ReactiveRenderObj){
   try {
     makeAutoObservable(obj);
   } catch (e: any){
-    console.log("AAA" + e.message);
+    // no op
   }
   if(!(objects.includes(obj))){
     objects.push(obj);
