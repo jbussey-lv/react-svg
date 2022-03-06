@@ -9,16 +9,22 @@ interface ReactiveRenderObj {
   render: () => any
 }
 
+let objects: any[] = [];
+
 export default function ReactiveRender(obj: ReactiveRenderObj){
   try {
     makeAutoObservable(obj);
   } catch (e: any){
-    console.log(e.message);
+    console.log("AAA" + e.message);
   }
+  if(!(objects.includes(obj))){
+    objects.push(obj);
+  }
+  let key = objects.findIndex(object => object === obj);
   let ObservedView = observer(() => {
     return obj.render();
   });
   return (
-    <ObservedView />
+    <ObservedView key={key}/>
   )
 }
