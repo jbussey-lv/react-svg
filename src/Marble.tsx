@@ -2,7 +2,6 @@ export default class Marble {
 
   public size: number;
   public millis: number = 0;
-  public key: number = Math.floor(Math.random() * 10000);
 
   constructor(size: number){
     this.size = size;
@@ -17,7 +16,7 @@ export default class Marble {
 
   render(){
     return (
-      <div key={this.key}>Marble - size = {this.size}, {this.millis}</div>
+      <div>Marble - size = {this.size}, {this.millis}</div>
     )
   }
 
