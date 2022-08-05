@@ -1,11 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './App';
-import ReactiveRender from './ReactiveRender';
+import World from './World';
 
 ReactDOM.render(
   <React.StrictMode>
-    { ReactiveRender(new App()) }
+    <World />
   </React.StrictMode>,
   document.getElementById('root')
 );

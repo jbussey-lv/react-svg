@@ -16,7 +16,7 @@ export default class Marble extends Sprite{
 
   render(){
     return (
-      <circle cx={this.position} cy="{this.position}" transform="translate({this.position} {this.position})" r="25" />
+      <circle cx={this.position} cy={this.position} r="25" />
     )
   }
 
