@@ -14,9 +14,15 @@ export default class Stage {
     this.pixelHeight = pixelHeight;
   }
 
+  private getTranslation(sprite: Sprite): string {
+    let pixelX = sprite.pos.x;
+    let pixelY = sprite.pos.y;
+    return `${pixelX} ${pixelY}`;
+  }
+
   private transformSpriteRender(sprite: Sprite): JSX.Element {
     // have to scale, rotate, and transform
-    let transform = `translate(${sprite.pos.x} ${sprite.pos.y})`
+    let transform = `translate(${this.getTranslation(sprite)})`
     return (
       <g transform={transform}>
         {sprite.render()}
@@ -25,9 +31,13 @@ export default class Stage {
   }
 
   render(): JSX.Element {
+
+    let viewBox = `0 0 {this.pixelWidth} height={this.pixelHeight}`;
     return (
-      <svg id="stage" width={this.pixelWidth} height={this.pixelHeight} style={{border: "1px solid black"}}>
-        {this.sprites.map(sprite => this.transformSpriteRender(sprite))}
+      <svg id="stage" viewBox={viewBox} width={this.pixelWidth} height={this.pixelHeight} style={{border: "1px solid black"}}>
+        {/* <g transform="scale(1,-1)"> */}
+          {this.sprites.map(sprite => this.transformSpriteRender(sprite))}
+        {/* </g> */}
       </svg>
     )
   }

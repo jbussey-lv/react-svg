@@ -19,11 +19,25 @@ class Ball extends Sprite {
   }
 }
 
+
+class House extends Sprite {
+
+  constructor(x: number, y: number){
+    super(Vec.n(x,y), 0);
+  }
+
+  render(): JSX.Element {
+    return (
+      <path d="M 0 0 L 200 0 L 200 200 L 100 300 L 0 200 z"
+      fill="red" stroke="blue" stroke-width="3" />
+    )
+  }
+}
+
 let stage = new Stage(800, 600);
 stage.sprites = [
   new Ball(20, 30, 10),
-  new Ball(50, 100, 30),
-  new Ball(100, 50, 20),
+  new House(0, 0)
 ]
 
 ReactDOM.render(
