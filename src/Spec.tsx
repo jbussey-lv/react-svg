@@ -1,12 +1,11 @@
 import Sprite from "./Sprite";
 
-export default class Marble extends Sprite{
+export default class Spec {
 
   public position: number;
   public millis: number = 0;
 
   constructor(position: number){
-    super();
     this.position = position;
   }
 
@@ -16,7 +15,7 @@ export default class Marble extends Sprite{
 
   render(){
     return (
-      <circle cx={this.position} cy={this.position} r="25" />
+      <circle cx={this.position} cy={this.position} r="2" />
     )
   }
 
