@@ -22,6 +22,10 @@ class Ball extends Sprite {
     let transform = `translate(${this.x}, ${this.y})`
     return <circle r={this.r} transform={transform} />
   }
+
+  update(dt: number){
+
+  }
 }
 
 
@@ -34,6 +38,10 @@ class House extends Sprite {
     super();
     this.x =x;
     this.y = y;
+  }
+
+  update(dt: number){
+    
   }
 
   render(): JSX.Element {
