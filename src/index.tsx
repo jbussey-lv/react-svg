@@ -23,9 +23,8 @@ var render = Render.create({
 
 // create two boxes and a ground
 var ship = Bodies.rectangle(400, 200, 160, 80);
-var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
+var ground = Bodies.rectangle(-1000, 610, 5000, 60, { isStatic: true });
 
-let thrustNet = -0.03;
 var leftThruster = Bodies.circle(100, 0, 5);
 var rightThruster = Bodies.circle(100, 0, 5);
 leftThruster.collisionFilter = {
@@ -38,6 +37,8 @@ rightThruster.collisionFilter = {
   'category': 2,
   'mask': 0,
 };
+
+var gamepadOutput = document.getElementById("gamepad-output")
 
 // add all of the bodies to the world
 Composite.add(engine.world, [leftThruster, rightThruster, ship, ground]);
@@ -59,37 +60,66 @@ document.addEventListener("keyup", event => {
   keysDown.delete(event.code);
 });
 
-console.log(engine.gravity, leftThruster.mass)
+var thrustMax = 0.02;
 
-Matter.Events.on(engine, "beforeUpdate", event => {
+function getLeftThrustNet(): number{
+  let gamepad = navigator.getGamepads()[0];
+  if(!gamepad){return 0};
+  return gamepad.axes[1] * thrustMax;
+}
 
-  let leftThrusterPos = {
+function getRightThrustNet(): number{
+  let gamepad = navigator.getGamepads()[0];
+  if(!gamepad){return 0};
+  return gamepad.axes[3] * thrustMax;;
+}
+
+function getLeftThrusterPos(ship: Matter.Body){
+  return {
     x: -40 * Math.cos(ship.angle) + ship.position.x,
     y: -40 * Math.sin(ship.angle) + ship.position.y
   }
+}
 
-  let thrustForce = {
-    x: -1 * thrustNet * Math.sin(ship.angle), 
-    y: thrustNet * Math.cos(ship.angle)
-  }
-
-  let rightThrusterPos = {
+function getRightThrusterPos(ship: Matter.Body){
+  return {
     x: 40 * Math.cos(ship.angle) + ship.position.x,
     y: 40 * Math.sin(ship.angle) + ship.position.y
+  }
+}
+
+Matter.Events.on(engine, "beforeUpdate", event => {
+
+  let leftThrusterPos = getLeftThrusterPos(ship);
+
+  let rightThrusterPos = getRightThrusterPos(ship);
+
+  let leftThrustForce = {
+    x: -1 * getLeftThrustNet() * Math.sin(ship.angle), 
+    y: getLeftThrustNet() * Math.cos(ship.angle)
+  }
+
+  let rightThrustForce = {
+    x: -1 * getRightThrustNet() * Math.sin(ship.angle), 
+    y: getRightThrustNet() * Math.cos(ship.angle)
   }
 
   Body.applyForce(leftThruster, leftThruster.position, {x: 0, y: -1 * engine.gravity.scale * leftThruster.mass});
   Body.applyForce(rightThruster, rightThruster.position, {x: 0, y: -1 * engine.gravity.scale * rightThruster.mass});
 
   // Matter.Body.setPosition(leftThruster, {x: 100, y: 100})
-  if(keysDown.has('KeyA')){
-    Body.applyForce( ship, leftThrusterPos, thrustForce);
-  }
-  if(keysDown.has('KeyD')){
-    Body.applyForce( ship, rightThrusterPos, thrustForce);
-  }
+  Body.applyForce( ship, leftThrusterPos, leftThrustForce);
+  Body.applyForce( ship, rightThrusterPos, rightThrustForce);
+  
+});
+
+
+Matter.Events.on(engine, "afterUpdate", event => {
+
+  let leftThrusterPos = getLeftThrusterPos(ship);
+
+  let rightThrusterPos = getRightThrusterPos(ship);
 
   Body.setPosition(leftThruster, {...leftThrusterPos})
   Body.setPosition(rightThruster, {...rightThrusterPos})
-  
-});
+})
