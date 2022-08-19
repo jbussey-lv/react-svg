@@ -1,7 +1,7 @@
 import Matter from 'matter-js';
 
 // module aliases
-var {Engine, Render, Runner, Bodies, Body, Composite} = Matter;
+var {Engine, Render, Runner, Bodies, Body, Composite, Constraint} = Matter;
 
 // create an engine
 var engine = Engine.create();
@@ -10,64 +10,79 @@ var engine = Engine.create();
 var render = Render.create({
     element: document.body,
     engine: engine,
-    options: {
-      wireframes: false // <-- important
-    }
+    options: {wireframes: true, showAngleIndicator: true}
 });
 
-let shipHeight = 50;
+var scale = 0.9;
+var xx = 150, yy=100, width=150*scale, height=30*scale, wheelSize=30*scale;
+var friction = 0.5;
+var wheelDensity = 0.0001;
+var thrustMax = 1;
 
-// create two boxes and a ground
-var ship = Bodies.rectangle(400, 200, 160, shipHeight, {
-  render: {
-       strokeStyle: 'blue',
-       lineWidth: 3
-  }
+var group = Body.nextGroup(true),
+        wheelBase = 20,
+        wheelAOffset = -width * 0.5 + wheelBase,
+        wheelBOffset = width * 0.5 - wheelBase,
+        wheelYOffset = 0;
+
+var car = Composite.create({ label: 'Car' });
+
+var body = Bodies.rectangle(xx, yy, width, height, { 
+    collisionFilter: {
+        group: group
+    },
+    chamfer: {
+        radius: height * 0.5
+    },
+    density: 0.0002
 });
 
-var ground = Bodies.rectangle(-1000, 610, 5000, 60, { isStatic: true });
-var leftWall = Bodies.rectangle(-10, 0, 60, 5000, { isStatic: true });
-var rightWall = Bodies.rectangle(810, 0, 60, 5000, { isStatic: true });
-var roof = Bodies.rectangle(-1000, -10, 5000, 60, { isStatic: true });
-
-var leftThruster = Bodies.circle(100, 0, 5, {
-  render: {
-       fillStyle: 'red',
-       strokeStyle: 'blue',
-       lineWidth: 3
-  }
+var wheelA = Bodies.circle(xx + wheelAOffset, yy + wheelYOffset, wheelSize, { 
+    collisionFilter: {
+        group: group
+    },
+    friction,
+    density: wheelDensity
 });
-var rightThruster = Bodies.circle(100, 0, 5, {
-  render: {
-       fillStyle: 'green',
-       strokeStyle: 'blue',
-       lineWidth: 3
-  }
+            
+var wheelB = Bodies.circle(xx + wheelBOffset, yy + wheelYOffset, wheelSize, { 
+    collisionFilter: {
+        group: group
+    },
+    friction,
+    density: wheelDensity
 });
-leftThruster.collisionFilter = {
-  'group': -1,
-  'category': 2,
-  'mask': 0,
-};
-rightThruster.collisionFilter = {
-  'group': -1,
-  'category': 2,
-  'mask': 0,
-};
+            
+var axelA = Constraint.create({
+    bodyB: body,
+    pointB: { x: wheelAOffset, y: wheelYOffset },
+    bodyA: wheelA,
+    stiffness: 1,
+    length: 0
+});
+                
+var axelB = Constraint.create({
+    bodyB: body,
+    pointB: { x: wheelBOffset, y: wheelYOffset },
+    bodyA: wheelB,
+    stiffness: 1,
+    length: 0
+});
 
-let bodies = [ship, leftThruster, rightThruster, ground, leftWall, rightWall, roof];
+Composite.add(car, body);
+Composite.add(car, wheelA);
+Composite.add(car, wheelB);
+Composite.add(car, axelA);
+Composite.add(car, axelB);
 
-for(let i = 0; i < 10; i++){
-  let circle = Bodies.circle(50*i, 50, 40, {
-    render: {
-         fillStyle: 'red',
-         strokeStyle: 'blue',
-         lineWidth: 3
-    }
-  });
-  Matter.Body.setDensity(circle, 0.0001);
-  bodies.push(circle);
-}
+var wallOptions = {friction, isStatic: true};
+var ground = Bodies.rectangle(-1000, 610, 5000, 60, wallOptions);
+var leftWall = Bodies.rectangle(-10, 0, 60, 5000, wallOptions);
+var rightWall = Bodies.rectangle(810, 0, 60, 5000, wallOptions);
+var roof = Bodies.rectangle(-1000, -10, 5000, 60, wallOptions);
+
+
+let bodies = [car, ground, leftWall, rightWall, roof];
 
 // add all of the bodies to the world
 Composite.add(engine.world, bodies);
@@ -78,9 +93,6 @@ Render.run(render);
 // create runner
 var runner = Runner.create();
 
-// run the engine
-Runner.run(runner, engine);
-
 const keysDown = new Set();
 document.addEventListener("keydown", event => {
   keysDown.add(event.code);
@@ -89,66 +101,40 @@ document.addEventListener("keyup", event => {
   keysDown.delete(event.code);
 });
 
-var thrustMax = 0.02;
+// run the engine
+Runner.run(runner, engine);
 
-function getLeftThrustNet(): number{
+function applyTorque(constraint: Matter.Constraint, torque: number){
+
+  let torqueForceOffset = 0.06;
+  let bodyA = constraint.bodyA;
+  let posA = bodyA.position;
+  let bodyB = constraint.bodyB;
+  let posB = bodyB.position;
+
+  Body.applyForce(bodyA, {x: posA.x-torqueForceOffset, y: posA.y}, {x: 0, y: -torque});
+  Body.applyForce(bodyA, {x: posA.x+torqueForceOffset, y: posA.y}, {x: 0, y: torque});
+  Body.applyForce(bodyB, {x: posB.x-torqueForceOffset, y: posB.y}, {x: 0, y: torque});
+  Body.applyForce(bodyB, {x: posB.x+torqueForceOffset, y: posB.y}, {x: 0, y: -torque});
+
+}
+
+function getThrust(): number{
   let gamepad = navigator.getGamepads()[0];
-  if(!gamepad){return 0};
-  return gamepad.axes[1] * thrustMax;
-}
 
-function getRightThrustNet(): number{
-  let gamepad = navigator.getGamepads()[0];
-  if(!gamepad){return 0};
-  return gamepad.axes[3] * thrustMax;;
-}
+  let thrust = gamepad ?
+               gamepad.axes[0] * thrustMax :
+               0;
 
-function getLeftThrusterPos(ship: Matter.Body){
-  return {
-    x: -40 * Math.cos(ship.angle) + ship.position.x,
-    y: -40 * Math.sin(ship.angle) + ship.position.y
-  }
-}
-
-function getRightThrusterPos(ship: Matter.Body){
-  return {
-    x: 40 * Math.cos(ship.angle) + ship.position.x,
-    y: 40 * Math.sin(ship.angle) + ship.position.y
-  }
+  return thrust;
 }
 
 Matter.Events.on(engine, "beforeUpdate", event => {
 
-  let leftThrusterPos = getLeftThrusterPos(ship);
+    applyTorque(axelA, getThrust());
+    applyTorque(axelB, getThrust());
 
-  let rightThrusterPos = getRightThrusterPos(ship);
+    // applyTorque(axelA, (wheelA.angularSpeed - body.angularSpeed) * -0.3);
+    // applyTorque(axelB, (wheelB.angularSpeed - body.angularSpeed) * -0.3);
 
-  let leftThrustForce = {
-    x: -1 * getLeftThrustNet() * Math.sin(ship.angle), 
-    y: getLeftThrustNet() * Math.cos(ship.angle)
-  }
-
-  let rightThrustForce = {
-    x: -1 * getRightThrustNet() * Math.sin(ship.angle), 
-    y: getRightThrustNet() * Math.cos(ship.angle)
-  }
-
-  Body.applyForce(leftThruster, leftThruster.position, {x: 0, y: -1 * engine.gravity.scale * leftThruster.mass});
-  Body.applyForce(rightThruster, rightThruster.position, {x: 0, y: -1 * engine.gravity.scale * rightThruster.mass});
-
-  // Matter.Body.setPosition(leftThruster, {x: 100, y: 100})
-  Body.applyForce( ship, leftThrusterPos, leftThrustForce);
-  Body.applyForce( ship, rightThrusterPos, rightThrustForce);
-  
 });
-
-
-Matter.Events.on(engine, "afterUpdate", event => {
-
-  let leftThrusterPos = getLeftThrusterPos(ship);
-
-  let rightThrusterPos = getRightThrusterPos(ship);
-
-  Body.setPosition(leftThruster, {...leftThrusterPos})
-  Body.setPosition(rightThruster, {...rightThrusterPos})
-})
